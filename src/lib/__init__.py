@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 #
 # Revelation - a password manager for GNOME 2
 # http://oss.codepoet.no/revelation/
@@ -23,14 +24,14 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-import util
-import config
-import datahandler
-import io
-import entry
-import data
-import ui
-import dialog
+from . import util
+from . import config
+from . import datahandler
+from . import io
+from . import entry
+from . import data
+from . import ui
+from . import dialog
 
 
 # set up some exceptions
