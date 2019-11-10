@@ -972,6 +972,7 @@ class Revelation(ui.App):
 
 		# We may need to change the datahandler
 		old_handler = None
+		result = None
 
 		try:
 			if datafile is None:
