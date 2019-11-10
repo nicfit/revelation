@@ -1,11 +1,14 @@
 # Gergely Nagy <greg@gnome.hu>
 #
-import base
+from __future__ import absolute_import
+
+from past.builtins import cmp
+from . import base
 from revelation import data, entry
 
 import time
 import csv
-from cStringIO import StringIO
+from io import StringIO
 
 
 class CSV(base.DataHandler):

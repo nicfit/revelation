@@ -24,12 +24,18 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-import base
+from __future__ import absolute_import
+
+from future import standard_library
+standard_library.install_aliases()
+from builtins import chr
+from builtins import range
+from . import base
 from revelation import config, data, entry, util
 from revelation.bundle import luks
 from revelation.PBKDF2 import PBKDF2
 
-import os, re, StringIO, struct, xml.dom.minidom, zlib
+import os, re, io, struct, xml.dom.minidom, zlib
 
 from xml.parsers.expat import ExpatError
 from Crypto.Cipher import AES
@@ -138,7 +144,7 @@ class RevelationXML(base.DataHandler):
 		if input is None:
 			raise base.FormatError
 
-		match = re.match("""
+		match = re.match(rb"""
 			\s*			# whitespace at beginning
 			<\?xml(?:.*)\?>		# xml header
 			\s*			# whitespace after xml header
@@ -215,7 +221,7 @@ class RevelationXML(base.DataHandler):
 		if dom.documentElement.nodeName != "revelationdata":
 			raise base.FormatError
 
-		if not dom.documentElement.attributes.has_key("dataversion"):
+		if "dataversion" not in dom.documentElement.attributes:
 			raise base.FormatError
 
 
@@ -259,7 +265,7 @@ class Revelation(RevelationXML):
 		if header is None:
 			raise base.FormatError
 
-		match = re.match("""
+		match = re.match(rb"""
 			^			# start of header
 			rvl\x00			# magic string
 			(.)			# data version
@@ -422,7 +428,7 @@ class Revelation2(RevelationXML):
 		if header is None:
 			raise base.FormatError
 
-		match = re.match("""
+		match = re.match(rb"""
 			^			# start of header
 			rvl\x00			# magic string
 			(.)			# data version
@@ -533,15 +539,16 @@ class Revelation2(RevelationXML):
 			raise base.PasswordError
 
 		# decompress data
-		padlen = ord(data[-1])
+		padlen = data[-1]
 		for i in data[-padlen:]:
-			if ord(i) != padlen:
+			if i != padlen:
 				raise base.FormatError
 
 		data = zlib.decompress(data[0:-padlen])
 
+		print(data[:20])
 		# check and import data
-		if data.strip()[:5] != "<?xml":
+		if data.strip()[:5] != b"<?xml":
 			raise base.FormatError
 
 		entrystore = RevelationXML.import_data(self, data)
@@ -570,7 +577,7 @@ class RevelationLUKS(RevelationXML):
 		if input is None:
 			raise base.FormatError
 
-		sbuf = StringIO.StringIO(input)
+		sbuf = io.StringIO(input)
 
 		l = luks.LuksFile()
 
@@ -620,7 +627,7 @@ class RevelationLUKS(RevelationXML):
 		data += struct.pack("<I", padlen)
 
 		# create a new luks file in memory
-		buffer		= StringIO.StringIO()
+		buffer		= io.StringIO()
 		luksfile	= luks.LuksFile()
 		luksfile.create(buffer, "aes", "cbc-essiv:sha256", "sha1", 16, 400)
 
@@ -641,7 +648,7 @@ class RevelationLUKS(RevelationXML):
 			raise base.PasswordError
 
 		# create a LuksFile
-		buffer		= StringIO.StringIO(input)
+		buffer		= io.StringIO(input)
 		luksfile	= luks.LuksFile()
 
 		try:

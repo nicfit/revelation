@@ -23,7 +23,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-import base
+from __future__ import absolute_import
+from __future__ import division
+
+from builtins import chr
+from builtins import range
+from past.utils import old_div
+from . import base
 from revelation import data, entry, util
 
 import math, random, string, xml.dom.minidom
@@ -53,7 +59,7 @@ class FPM(base.DataHandler):
 		# decode ascii armoring
 		decoded = ""
 
-		for i in range(len(data) / 2):
+		for i in range(old_div(len(data), 2)):
 			high = ord(data[2 * i]) - ord("a")
 			low = ord(data[2 * i + 1]) - ord("a")
 			decoded += chr(high * 16 + low)
@@ -78,7 +84,7 @@ class FPM(base.DataHandler):
 		"Encrypts data"
 
 		# get data sizes
-		blocks = (len(data) / 7) + 1
+		blocks = (old_div(len(data), 7)) + 1
 		size = 8 * blocks
 
 		# add noise
@@ -99,7 +105,7 @@ class FPM(base.DataHandler):
 		res = ""
 
 		for i in range(len(data)):
-			high = ord(data[i]) / 16
+			high = old_div(ord(data[i]), 16)
 			low = ord(data[i]) - high * 16
 			res += chr(ord("a") + high) + chr(ord("a") + low)
 
@@ -263,7 +269,7 @@ class FPM(base.DataHandler):
 
 				elif fieldnode.nodeName == "category":
 
-					if folders.has_key(content):
+					if content in folders:
 						parent = folders[content]
 
 					else:

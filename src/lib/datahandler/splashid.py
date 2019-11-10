@@ -22,9 +22,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
+from __future__ import absolute_import
+
 import csv, time
 
-import base
+from . import base
 from revelation import data, entry
 
 
@@ -93,7 +95,7 @@ class SplashIDCSV(base.DataHandler):
 				e[entry.HostnameField]	= row[4]
 
 				# Create and/or add to folder based on category:
-				if folders.has_key(row[8]):
+				if row[8] in folders:
 					parent = folders[category]
 
 				else:

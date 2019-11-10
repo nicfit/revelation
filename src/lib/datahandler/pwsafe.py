@@ -23,7 +23,14 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-import base
+from __future__ import absolute_import
+from __future__ import division
+
+from builtins import chr
+from builtins import range
+from builtins import object
+from past.utils import old_div
+from . import base
 from revelation import data, entry, util
 
 import locale, re, struct
@@ -45,13 +52,13 @@ FIELDTYPE_END		= 0xff
 # non-standard things we need to replicate. This implementation is
 # written by J. Hallen and L. Creighton for the Pypy project, with
 # slight modifications by Erik Grinaker.
-class SHA:
+class SHA(object):
 
 	K = [
-		0x5A827999L,
-		0x6ED9EBA1L,
-		0x8F1BBCDCL,
-		0xCA62C1D6L
+		0x5A827999,
+		0x6ED9EBA1,
+		0x8F1BBCDC,
+		0xCA62C1D6
 	]
 
 
@@ -64,16 +71,16 @@ class SHA:
 
 
 	def __bytelist2longBigEndian(self, list):
-		imax = len(list)/4
-		hl = [0L] * imax
+		imax = old_div(len(list),4)
+		hl = [0] * imax
 	
 		j = 0
 		i = 0
 		while i < imax:
-			b0 = long(ord(list[j])) << 24
-			b1 = long(ord(list[j+1])) << 16
-			b2 = long(ord(list[j+2])) << 8
-			b3 = long(ord(list[j+3]))
+			b0 = int(ord(list[j])) << 24
+			b1 = int(ord(list[j+1])) << 16
+			b2 = int(ord(list[j+2])) << 8
+			b3 = int(ord(list[j+3]))
 			hl[i] = b0 | b1 | b2 | b3
 			i = i+1
 			j = j+4
@@ -85,11 +92,11 @@ class SHA:
 		s = ''
 		pack = struct.pack
 		while n > 0:
-			s = pack('>I', n & 0xffffffffL) + s
+			s = pack('>I', n & 0xffffffff) + s
 			n = n >> 32
 	
 		for i in range(len(s)):
-			if s[i] <> '\000':
+			if s[i] != '\000':
 				break
 		else:
 			s = '\000'
@@ -110,7 +117,7 @@ class SHA:
 	def __transform(self, W):
 		for t in range(16, 80):
 			W.append(self.__rotateLeft(
-				W[t-3] ^ W[t-8] ^ W[t-14] ^ W[t-16], 1) & 0xffffffffL)
+				W[t-3] ^ W[t-8] ^ W[t-14] ^ W[t-16], 1) & 0xffffffff)
 
 		A = self.H0
 		B = self.H1
@@ -122,40 +129,40 @@ class SHA:
 			TEMP = self.__rotateLeft(A, 5) + ((B & C) | ((~ B) & D)) + E + W[t] + self.K[0]
 			E = D
 			D = C
-			C = self.__rotateLeft(B, 30) & 0xffffffffL
+			C = self.__rotateLeft(B, 30) & 0xffffffff
 			B = A
-			A = TEMP & 0xffffffffL
+			A = TEMP & 0xffffffff
 
 		for t in range(20, 40):
 			TEMP = self.__rotateLeft(A, 5) + (B ^ C ^ D) + E + W[t] + self.K[1]
 			E = D
 			D = C
-			C = self.__rotateLeft(B, 30) & 0xffffffffL
+			C = self.__rotateLeft(B, 30) & 0xffffffff
 			B = A
-			A = TEMP & 0xffffffffL
+			A = TEMP & 0xffffffff
 
 		for t in range(40, 60):
 			TEMP = self.__rotateLeft(A, 5) + ((B & C) | (B & D) | (C & D)) + E + W[t] + self.K[2]
 			E = D
 			D = C
-			C = self.__rotateLeft(B, 30) & 0xffffffffL
+			C = self.__rotateLeft(B, 30) & 0xffffffff
 			B = A
-			A = TEMP & 0xffffffffL
+			A = TEMP & 0xffffffff
 
 		for t in range(60, 80):
 			TEMP = self.__rotateLeft(A, 5) + (B ^ C ^ D)  + E + W[t] + self.K[3]
 			E = D
 			D = C
-			C = self.__rotateLeft(B, 30) & 0xffffffffL
+			C = self.__rotateLeft(B, 30) & 0xffffffff
 			B = A
-			A = TEMP & 0xffffffffL
+			A = TEMP & 0xffffffff
 
 
-		self.H0 = (self.H0 + A) & 0xffffffffL
-		self.H1 = (self.H1 + B) & 0xffffffffL
-		self.H2 = (self.H2 + C) & 0xffffffffL
-		self.H3 = (self.H3 + D) & 0xffffffffL
-		self.H4 = (self.H4 + E) & 0xffffffffL
+		self.H0 = (self.H0 + A) & 0xffffffff
+		self.H1 = (self.H1 + B) & 0xffffffff
+		self.H2 = (self.H2 + C) & 0xffffffff
+		self.H3 = (self.H3 + D) & 0xffffffff
+		self.H4 = (self.H4 + E) & 0xffffffff
 
 
 	def digest(self):
@@ -167,7 +174,7 @@ class SHA:
 		input = [] + self.input
 		count = [] + self.count
 
-		index = (self.count[1] >> 3) & 0x3fL
+		index = (self.count[1] >> 3) & 0x3f
 
 		if index < 56:
 			padLen = 56 - index
@@ -202,8 +209,8 @@ class SHA:
 		return ''.join(['%02x' % ord(c) for c in self.digest()])
 
 
-	def init(self, H0 = 0x67452301L, H1 = 0xEFCDAB89L, H2 = 0x98BADCFEL, H3 = 0x10325476L, H4 = 0xC3D2E1F0L):
-		self.length = 0L
+	def init(self, H0 = 0x67452301, H1 = 0xEFCDAB89, H2 = 0x98BADCFE, H3 = 0x10325476, H4 = 0xC3D2E1F0):
+		self.length = 0
 		self.input = []
 
 		self.H0 = H0
@@ -214,9 +221,9 @@ class SHA:
 
 
 	def update(self, inBuf):
-		leninBuf = long(len(inBuf))
+		leninBuf = int(len(inBuf))
 
-		index = (self.count[1] >> 3) & 0x3FL
+		index = (self.count[1] >> 3) & 0x3F
 
 		self.count[1] = self.count[1] + (leninBuf << 3)
 		if self.count[1] < (leninBuf << 3):
@@ -250,7 +257,7 @@ def decrypt(key, ciphertext, iv = None):
 	cbc		= iv
 	plaintext	= ""
 
-	for cipherblock in [ ciphertext[i * 8 : (i + 1) * 8] for i in range(len(ciphertext) / 8) ]:
+	for cipherblock in [ ciphertext[i * 8 : (i + 1) * 8] for i in range(old_div(len(ciphertext), 8)) ]:
 
 		plainblock = decrypt_block(cipher, cipherblock)
 
@@ -283,7 +290,7 @@ def encrypt(key, plaintext, iv = None):
 	cbc		= iv
 	ciphertext	= ""
 
-	for plainblock in [ plaintext[i * 8 : (i + 1) * 8] for i in range(len(plaintext) / 8) ]:
+	for plainblock in [ plaintext[i * 8 : (i + 1) * 8] for i in range(old_div(len(plaintext), 8)) ]:
 
 		if cbc != None:
 			plainblock = "".join([ chr(ord(plainblock[i]) ^ ord(cbc[i])) for i in range(len(plainblock)) ])
@@ -318,7 +325,7 @@ def generate_testhash(password, random):
 		random = encrypt_block(cipher, random)
 
 	h = SHA()
-	h.init(0L, 0L, 0L, 0L, 0L)
+	h.init(0, 0, 0, 0, 0)
 	h.update(random)
 	h.update("\x00\x00")
 	testhash = h.digest()
@@ -508,7 +515,7 @@ class PasswordSafe2(base.DataHandler):
 		if group in ( None, "" ):
 			return None
 
-		if groupmap.has_key(group):
+		if group in groupmap:
 			return groupmap[group]
 
 		if "." in group:

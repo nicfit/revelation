@@ -23,7 +23,12 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-import base
+from __future__ import absolute_import
+
+from past.builtins import cmp
+from builtins import str
+from builtins import range
+from . import base
 from revelation import config, data, entry
 
 import gettext, time
@@ -448,7 +453,7 @@ class XHTML(base.DataHandler):
 			e.path = self.__get_entryid(entrystore, iter)
 
 			if type(e) != entry.FolderEntry:
-				if not entries.has_key(type(e)):
+				if type(e) not in entries:
 					entries[type(e)] = []
 
 				entries[type(e)].append(e)
@@ -462,7 +467,7 @@ class XHTML(base.DataHandler):
 		xhtml += "\n"
 
 		for entrytype in entry.ENTRYLIST:
-			if not entries.has_key(entrytype):
+			if entrytype not in entries:
 				continue
 
 			xhtml += "	<h3>%s:</h3>\n" % entrytype().typename

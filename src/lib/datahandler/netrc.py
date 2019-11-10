@@ -23,10 +23,15 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-import base
+from __future__ import absolute_import
+
+from future import standard_library
+standard_library.install_aliases()
+from . import base
 from revelation import data, entry
 
-import shlex, StringIO, time
+import shlex, time
+from io import StringIO
 
 
 class NetRC(base.DataHandler):
@@ -76,7 +81,7 @@ class NetRC(base.DataHandler):
 		entrystore = data.EntryStore()
 
 		# set up a lexical parser
-		datafp = StringIO.StringIO(netrc)
+		datafp = StringIO(netrc)
 		lexer = shlex.shlex(datafp)
 		lexer.wordchars += r"!\"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"
 

@@ -23,7 +23,14 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-import base
+from __future__ import absolute_import
+from __future__ import division
+
+from builtins import chr
+from builtins import str
+from builtins import range
+from past.utils import old_div
+from . import base
 from revelation import data, entry
 
 import locale, re
@@ -239,7 +246,7 @@ class GPass05(base.DataHandler):
 
 		while input > 0:
 			c	= input % 0x80
-			input	= input / 0x80
+			input	= old_div(input, 0x80)
 
 			if input > 0:
 				c |= 0x80
@@ -303,7 +310,7 @@ class GPass05(base.DataHandler):
 			path		= entrystore.get_path(iter)
 			parentpath	= path[:-1]
 
-			if len(parentpath) > 0 and foldermap.has_key(parentpath):
+			if len(parentpath) > 0 and parentpath in foldermap:
 				parentid = foldermap[parentpath]
 
 			else:
@@ -425,7 +432,7 @@ class GPass05(base.DataHandler):
 
 
 			# add entry to entrystore
-			if foldermap.has_key(parentid):
+			if parentid in foldermap:
 				parent = foldermap[parentid]
 
 			else:
