@@ -60,6 +60,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 http://www.gnu.org/copyleft/gpl.html
 """
+from __future__ import absolute_import
 
 import os, math, struct, stat, hashlib
 
@@ -67,7 +68,7 @@ import os, math, struct, stat, hashlib
 # see: http://lists.dlitz.net/pipermail/pycrypto/2008q3/000020.html
 from Crypto.Util.randpool import RandomPool
 from Crypto.Cipher import *
-import PBKDFv2, AfSplitter
+from . import PBKDFv2, AfSplitter
 
 class LuksError(Exception):
 	def __init__(self, value):
