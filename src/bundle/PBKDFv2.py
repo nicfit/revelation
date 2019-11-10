@@ -121,18 +121,18 @@ class PBKDFv2:
 
         # the first iteration; P is the key, and a concatination of
         # S and blocknumber is the message
-	istr = struct.pack(">I", i+1)
-	PRFMaster = hmac.new(P,digestmod=getattr(hashlib, digest))
-	PRF = PRFMaster.copy()
-	PRF.update(S)
-	PRF.update(istr)
+        istr = struct.pack(">I", i+1)
+        PRFMaster = hmac.new(P,digestmod=getattr(hashlib, digest))
+        PRF = PRFMaster.copy()
+        PRF.update(S)
+        PRF.update(istr)
         U = PRF.digest() # the first iteration
 
-	Fbuf = U
+        Fbuf = U
 
         while iteration < c:                  # loop through all iterations
-	    PRF = PRFMaster.copy()
-	    PRF.update(U)
+            PRF = PRFMaster.copy()
+            PRF.update(U)
             U = PRF.digest()
             Fbuf = self._xor(U, Fbuf)    # XOR this new iteration with the old one
             iteration += 1
@@ -145,5 +145,5 @@ class PBKDFv2:
         if len(a) != len(b):
             raise ValueError("ERROR: Strings are of different size! %s %s" % (len(a), len(b)))
 
-	xor = XOR.new(a)
-	return xor.encrypt(b)
+        xor = XOR.new(a)
+        return xor.encrypt(b)
