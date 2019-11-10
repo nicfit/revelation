@@ -748,12 +748,12 @@ class ComboBoxEntry(Gtk.ComboBox):
 		# self.entry.set_text(text)
 
 
-	def set_values(self, list):
+	def set_values(self, datalist):
 		"Sets the values for the dropdown"
 
 		self.model.clear()
 
-		for item in list:
+		for item in datalist:
 			self.model.append((item,))
 
 
