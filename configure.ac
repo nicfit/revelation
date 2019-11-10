@@ -7,9 +7,9 @@ dnl
 dnl initialize autoconf/automake
 AC_PREREQ(2.53)
 AC_INIT([revelation],[0.5.0],[https://bitbucket.org/erikg/revelation/issues/new],[revelation],[http://revelation.olasagasti.info/])
-AM_INIT_AUTOMAKE([1.11 tar-ustar dist-xz no-dist-gzip -Wno-portability])
+AM_INIT_AUTOMAKE([1.11 tar-ustar dist-xz no-dist-gzip -Wno-portability foreign])
 
-RVL_PYTHON_PATH(2.3)
+RVL_PYTHON_PATH(3.5)
 RVL_PYGTK()
 RVL_GETTEXT()
 RVL_MMAN()

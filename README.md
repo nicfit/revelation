@@ -1,18 +1,16 @@
-Revelation is a password manager for the GNOME 2 desktop, released
+Revelation is a password manager for the GNOME 3 desktop, released
 under the GNU GPL license. It stores accounts and passwords in a single,
 secure place, and gives access to them through a user-friendly graphical
 interface.
 
-The project website is located at http://revelation.olasagasti.info/
+This is a fork of http://revelation.olasagasti.info/ to make it work
+using Gtk3 and Python 3.
 
 Revelation depends on the following software:
 
-- GNOME 2.10
-- GTK+ 2.8
-- glib 2.16
-- Python 2.3
-- pygtk 2.8
-- gnome-python 2.10
+- PyGObject
+- Python 3 (currently working on Python 3.7)
+- Crypto
 - pycrypto 1.9
 - cracklib
 - dbus
