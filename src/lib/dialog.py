@@ -693,7 +693,7 @@ class PasswordChange(Password):
 				try:
 					util.check_password(password)
 
-				except ValueError, res:
+				except ValueError as res:
 					response = Warning(
 						self, _('Use insecure password?'),
 						_('The password you entered is not secure; %s. Are you sure you want to use it?') % str(res).lower(),
@@ -818,7 +818,7 @@ class PasswordSave(Password):
 				try:
 					util.check_password(password)
 
-				except ValueError, res:
+				except ValueError as res:
 					res = str(res).lower()
 
 					response = Warning(
@@ -896,7 +896,7 @@ class EntryEdit(Utility):
 		# generate field entries
 		for field in fields:
 
-			if self.widgetdata.has_key(type(field)):
+			if type(field) in self.widgetdata:
 				userdata = self.widgetdata[type(field)]
 
 			elif field.datatype == entry.DATATYPE_PASSWORD:
@@ -908,7 +908,7 @@ class EntryEdit(Utility):
 			fieldentry = ui.generate_field_edit_widget(field, self.config, userdata)
 			self.entry_field[type(field)] = fieldentry
 
-			if self.fielddata.has_key(type(field)):
+			if type(field) in self.fielddata:
 				fieldentry.set_text(self.fielddata[type(field)])
 
 			# FIXME: port
@@ -980,7 +980,7 @@ class EntryEdit(Utility):
 
 		self.widgetdata[fieldtype] = userdata
 
-		if fieldtype == entry.UsernameField and self.entry_field.has_key(entry.UsernameField):
+		if fieldtype == entry.UsernameField and entry.UsernameField in self.entry_field:
 			self.entry_field[entry.UsernameField].set_values(userdata)
 
 
@@ -1191,7 +1191,7 @@ class PasswordChecker(Utility):
 				icon	= ui.STOCK_PASSWORD_STRONG
 				result	= _('The password seems good')
 
-		except ValueError, result:
+		except ValueError as result:
 			icon	= ui.STOCK_PASSWORD_WEAK
 			result = _('The password %s') % str(result)
 
@@ -1336,5 +1336,5 @@ def run_unique(dialog, *args):
 def unique_exists(dialog):
 	"Checks if a unique dialog exists"
 
-	return UNIQUE_DIALOGS.has_key(dialog) == True and UNIQUE_DIALOGS[dialog] != None
+	return (dialog in UNIQUE_DIALOGS) == True and UNIQUE_DIALOGS[dialog] != None
 

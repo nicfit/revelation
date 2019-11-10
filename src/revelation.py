@@ -304,7 +304,7 @@ class Revelation(ui.App):
 			"view/toolbar"		: "/menubar/menu-view/view-toolbar"
 		}
 
-		for key, path in bind.items():
+		for key, path in list(bind.items()):
 			ui.config_bind(self.config, key, self.uimanager.get_widget(path))
 
 		self.show_all()
@@ -671,15 +671,15 @@ class Revelation(ui.App):
 			sourcepath = self.entrystore.get_path(sourceiter)
 
 			if self.entrystore.is_ancestor(sourceiter, destiter) == True or sourcepath == destpath:
-				context.finish(False, False, long(time))
+				context.finish(False, False, int(time))
 				return
 
 			elif pos == Gtk.TreeViewDropPosition.BEFORE and sourcepath[:-1] == destpath[:-1] and sourcepath[-1] == destpath[-1] - 1:
-				context.finish(False, False, long(time))
+				context.finish(False, False, int(time))
 				return
 
 			elif pos == Gtk.TreeViewDropPosition.AFTER and sourcepath[:-1] == destpath[:-1] and sourcepath[-1] == destpath[-1] + 1:
-				context.finish(False, False, long(time))
+				context.finish(False, False, int(time))
 				return
 
 
@@ -701,7 +701,7 @@ class Revelation(ui.App):
 
 		self.entry_move(sourceiters, parent, sibling)
 
-		context.finish(False, False, long(time))
+		context.finish(False, False, int(time))
 
 
 	def __cb_tree_keypress(self, widget, data = None):
