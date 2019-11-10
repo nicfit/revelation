@@ -968,7 +968,7 @@ class IconEntry(Alignment):
 		"Sets the icon for the entry"
 
 		if tooltip != self.icontip:
-                        self.iconebox.set_tooltip_text(tooltip)
+			self.iconebox.set_tooltip_text(tooltip)
 			self.icontip = tooltip
 
 		if self.icon != None and self.icon.get_stock()[0] == stock:
@@ -1828,17 +1828,17 @@ class App(Gtk.Window):
 	"An application window"
 
 	def __init__(self, appname):
-                GObject.GObject.__init__(self)
-                self.set_title(appname)
+		GObject.GObject.__init__(self)
+		self.set_title(appname)
 
-                self.toolbars = {}
+		self.toolbars = {}
 
-                self.main_vbox = Gtk.VBox()
+		self.main_vbox = Gtk.VBox()
 
 		self.statusbar = Statusbar()
-                self.main_vbox.pack_end(self.statusbar, False, True, 0)
+		self.main_vbox.pack_end(self.statusbar, False, True, 0)
 
-                self.add(self.main_vbox)
+		self.add(self.main_vbox)
 
 		self.uimanager = UIManager()
 		self.add_accel_group(self.uimanager.get_accel_group())
@@ -1866,28 +1866,28 @@ class App(Gtk.Window):
 	def __cb_toolbar_hide(self, widget, name):
 		"Hides the toolbar dock when the toolbar is hidden"
 
-                if name in self.toolbars:
-                        self.toolbars[name].hide()
+		if name in self.toolbars:
+			self.toolbars[name].hide()
 
 
 	def __cb_toolbar_show(self, widget, name):
 		"Shows the toolbar dock when the toolbar is shown"
 
-                if name in self.toolbars:
-                        self.toolbars[name].show()
+		if name in self.toolbars:
+			self.toolbars[name].show()
 
 
 	def add_toolbar(self, toolbar, name, band, detachable):
 		"Adds a toolbar"
 
-                # TODO: This is not working correctly yet.
-                if detachable:
-                        handlebox = Gtk.HandleBox()
-                        handlebox.add(toolbar)
-                        toolbar = handlebox
+		# TODO: This is not working correctly yet.
+		if detachable:
+			handlebox = Gtk.HandleBox()
+			handlebox.add(toolbar)
+			toolbar = handlebox
 
-                self.toolbars[name] = toolbar
-                self.main_vbox.pack_start(toolbar, False, True, 0)
+		self.toolbars[name] = toolbar
+		self.main_vbox.pack_start(toolbar, False, True, 0)
 
 		toolbar.connect("show", self.__cb_toolbar_show, name)
 		toolbar.connect("hide", self.__cb_toolbar_hide, name)
@@ -1923,24 +1923,24 @@ class App(Gtk.Window):
 		for item in menubar.get_children():
 			self.__connect_menu_statusbar(item.get_submenu())
 
-                self.main_vbox.pack_start(menubar, False, True, 0)
+		self.main_vbox.pack_start(menubar, False, True, 0)
 
 
 	def set_title(self, title):
 		"Sets the window title"
 
-                Gtk.Window.set_title(self, title + " - " + config.APPNAME)
+		Gtk.Window.set_title(self, title + " - " + config.APPNAME)
 
 
 	def set_toolbar(self, toolbar):
 		"Sets the application toolbar"
 
-                self.main_vbox.pack_start(toolbar, False, True, 0)
+		self.main_vbox.pack_start(toolbar, False, True, 0)
 		toolbar.connect("show", self.__cb_toolbar_show, "Toolbar")
 		toolbar.connect("hide", self.__cb_toolbar_hide, "Toolbar")
 
-        def set_contents(self, widget):
-                self.main_vbox.pack_start(widget, True, True, 0)
+	def set_contents(self, widget):
+		self.main_vbox.pack_start(widget, True, True, 0)
 
 
 

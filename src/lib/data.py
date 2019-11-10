@@ -320,8 +320,8 @@ class EntryStore(Gtk.TreeStore):
 		self.changed = False
 		self.connect("row-has-child-toggled", self.__cb_iter_has_child)
 
-                self.set_sort_func(COLUMN_NAME, self.__cmp)
-                self.set_sort_column_id(COLUMN_NAME, Gtk.SortType.ASCENDING)
+		self.set_sort_func(COLUMN_NAME, self.__cmp)
+		self.set_sort_column_id(COLUMN_NAME, Gtk.SortType.ASCENDING)
 
 
         def __cmp(self, treemodel, iter1, iter2, user_data=None):

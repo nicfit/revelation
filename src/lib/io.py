@@ -52,7 +52,7 @@ class DataFile(GObject.Object):
 
 	def __cb_monitor(self, monitor_uri, info_uri, event, data = None):
 		"Callback for file monitoring"
-                if event == Gio.FileMonitorEvent.CHANGED:
+		if event == Gio.FileMonitorEvent.CHANGED:
 			self.emit("content-changed", self.get_file())
 
 
@@ -169,7 +169,7 @@ def file_exists(file):
 	if file is None:
 		return False
 
-        return Gio.File(file).query_exists()
+	return Gio.File(file).query_exists()
 
 
 def file_is_local(file):
@@ -178,29 +178,29 @@ def file_is_local(file):
 	if file is None:
 		return False
 
-        # FIXME: port (condition does not make sense)
-        f = Gio.File.new_for_path(file)
-        return f.get_uri_scheme() == 'file'
+	# FIXME: port (condition does not make sense)
+	f = Gio.File.new_for_path(file)
+	return f.get_uri_scheme() == 'file'
 
 
 def file_monitor(file, callback):
 	"Starts monitoring a file"
 
 	try:
-                f = Gio.File.new_for_path(file)
-                handle = f.monitor_file(Gio.FileMonitorFlags.NONE, None)
-                handle.connect('changed', callback)
-                return handle
+		f = Gio.File.new_for_path(file)
+		handle = f.monitor_file(Gio.FileMonitorFlags.NONE, None)
+		handle.connect('changed', callback)
+		return handle
 	except GLib.GError as error:
-                # FIXME: port. Check validity.
-                print("file monitor error")
-                return None
+		# FIXME: port. Check validity.
+		print("file monitor error")
+		return None
 
 
 def file_monitor_cancel(handle):
 	"Cancels file monitoring"
 
-        handle.cancel()
+	handle.cancel()
 
 
 def file_normpath(file):
@@ -215,9 +215,9 @@ def file_normpath(file):
 	if not re.match("^[a-zA-Z]+://", file) and file[0] != "/":
 		file = os.path.abspath(file)
 
-        # Does URI() do anything useful with the input? -thomas jenkins
+	# Does URI() do anything useful with the input? -thomas jenkins
 	#return re.sub("^file:/{,2}", "", str(gnomevfs.URI(file)))
-        return file
+	return file
 
 
 def file_read(file):
@@ -226,9 +226,9 @@ def file_read(file):
 	try:
 		if file is None:
 			raise IOError
-                f = Gio.File.new_for_path(file)
-                etags, contents, length = f.load_contents()
-                return contents
+		f = Gio.File.new_for_path(file)
+		etags, contents, length = f.load_contents()
+		return contents
 
 	except GLib.GError as error:
 		raise IOError
@@ -244,7 +244,7 @@ def file_write(file, data):
 		if data is None:
 			data = ""
 
-                return Gio.File(file).replace_contents(data)
+		return Gio.File(file).replace_contents(data)
 
 	except GLib.GError as error:
 		raise IOError
