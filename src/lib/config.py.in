@@ -23,9 +23,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
+import gi
+gi.require_version("GConf", "2.0")
+from gi.repository  import GConf
+
 import util
 
-import gconf, gettext, os
+import gettext, os
 
 _ = gettext.gettext
 
@@ -72,10 +76,10 @@ class Config(object):
 
 	def __init__(self, basedir = "/apps/revelation"):
 		self.basedir	= basedir
-		self.client	= gconf.client_get_default()
+		self.client	= GConf.Client.get_default()
 		self.callbacks	= {}
 
-		self.client.add_dir(self.basedir, gconf.CLIENT_PRELOAD_NONE)
+		self.client.add_dir(self.basedir, GConf.ClientPreloadType.PRELOAD_NONE)
 
 
 	def __cb_notify(self, client, id, entry, data):
@@ -86,13 +90,13 @@ class Config(object):
 		if value == None:
 			return
 
-		elif value.type == gconf.VALUE_STRING:
+		elif value.type == GConf.ValueType.STRING:
 			v = value.get_string()
 
-		elif value.type == gconf.VALUE_BOOL:
+		elif value.type == GConf.ValueType.BOOL:
 			v = value.get_bool()
 
-		elif value.type == gconf.VALUE_INT:
+		elif value.type == GConf.ValueType.INT:
 			v = value.get_int()
 
 
@@ -128,13 +132,13 @@ class Config(object):
 		if value is None:
 			raise ConfigError
 
-		elif value.type == gconf.VALUE_STRING:
+		elif value.type == GConf.ValueType.STRING:
 			return str(value.get_string())
 
-		elif value.type == gconf.VALUE_INT:
+		elif value.type == GConf.ValueType.INT:
 			return value.get_int()
 
-		elif value.type == gconf.VALUE_BOOL:
+		elif value.type == GConf.ValueType.BOOL:
 			return value.get_bool()
 
 
@@ -160,13 +164,13 @@ class Config(object):
 		if node is None:
 			raise ConfigError
 
-		elif node.type == gconf.VALUE_STRING:
+		elif node.type == GConf.ValueType.STRING:
 			node.set_string(value)
 
-		elif node.type == gconf.VALUE_BOOL:
+		elif node.type == GConf.ValueType.BOOL:
 			node.set_bool(value)
 
-		elif node.type == gconf.VALUE_INT:
+		elif node.type == GConf.ValueType.INT:
 			node.set_int(int(value))
 
 		self.client.set(self.__resolve_keypath(key), node)

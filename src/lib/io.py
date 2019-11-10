@@ -25,14 +25,18 @@
 
 import datahandler
 
-import gio, gobject, os.path, re
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import GObject, Gio, GLib
+
+import os.path, re
 
 
-class DataFile(gobject.GObject):
+class DataFile(GObject.Object):
 	"Handles data files"
 
 	def __init__(self, handler):
-		gobject.GObject.__init__(self)
+		GObject.Object.__init__(self)
 
 		self.__uri		= None
 		self.__handler		= None
@@ -48,7 +52,7 @@ class DataFile(gobject.GObject):
 
 	def __cb_monitor(self, monitor_uri, info_uri, event, data = None):
 		"Callback for file monitoring"
-                if event == gio.FILE_MONITOR_EVENT_CHANGED:
+                if event == Gio.FileMonitorEvent.CHANGED:
 			self.emit("content-changed", self.get_file())
 
 
@@ -123,7 +127,7 @@ class DataFile(gobject.GObject):
 		file_write(file, self.__handler.export_data(entrystore, password))
 
 		# need to use idle_add() to avoid notifying about current save
-		gobject.idle_add(lambda: self.__monitor(file))
+		GObject.idle_add(lambda: self.__monitor(file))
 
 		self.set_password(password)
 		self.set_file(file)
@@ -153,9 +157,9 @@ class DataFile(gobject.GObject):
 		self.__password = password
 
 
-gobject.type_register(DataFile)
-gobject.signal_new("changed", DataFile, gobject.SIGNAL_ACTION, gobject.TYPE_BOOLEAN, (str,))
-gobject.signal_new("content-changed", DataFile, gobject.SIGNAL_ACTION, gobject.TYPE_BOOLEAN, (str,))
+GObject.type_register(DataFile)
+GObject.signal_new("changed", DataFile, GObject.SignalFlags.ACTION, GObject.TYPE_BOOLEAN, (str,))
+GObject.signal_new("content-changed", DataFile, GObject.SignalFlags.ACTION, GObject.TYPE_BOOLEAN, (str,))
 
 
 
@@ -165,7 +169,7 @@ def file_exists(file):
 	if file is None:
 		return False
 
-        return gio.File(file).query_exists()
+        return Gio.File(file).query_exists()
 
 
 def file_is_local(file):
@@ -174,17 +178,22 @@ def file_is_local(file):
 	if file is None:
 		return False
 
-        return gio.File(file).get_uri_scheme() == 'file'
+        # FIXME: port (condition does not make sense)
+        f = Gio.File.new_for_path(file)
+        return f.get_uri_scheme() == 'file'
 
 
 def file_monitor(file, callback):
 	"Starts monitoring a file"
 
 	try:
-                handle = gio.File(file).monitor_file()
+                f = Gio.File.new_for_path(file)
+                handle = f.monitor_file(Gio.FileMonitorFlags.NONE, None)
                 handle.connect('changed', callback)
                 return handle
-        except gio.Error:
+	except GLib.GError as error:
+                # FIXME: port. Check validity.
+                print("file monitor error")
                 return None
 
 
@@ -217,11 +226,11 @@ def file_read(file):
 	try:
 		if file is None:
 			raise IOError
-
-                contents, length, etag = gio.File(file).load_contents()
+                f = Gio.File.new_for_path(file)
+                etags, contents, length = f.load_contents()
                 return contents
 
-	except gio.Error:
+	except GLib.GError as error:
 		raise IOError
 
 
@@ -235,8 +244,8 @@ def file_write(file, data):
 		if data is None:
 			data = ""
 
-                return gio.File(file).replace_contents(data)
+                return Gio.File(file).replace_contents(data)
 
-	except gio.Error:
+	except GLib.GError as error:
 		raise IOError
 

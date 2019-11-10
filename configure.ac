@@ -17,12 +17,6 @@ RVL_GCONF()
 RVL_FDO_MIME()
 
 RVL_PYTHON_MODULE(Crypto, yes)
-RVL_PYTHON_MODULE(gconf, yes)
-RVL_PYTHON_MODULE(gtk, yes)
-RVL_PYTHON_MODULE(gnome, yes)
-RVL_PYTHON_MODULE(gio, yes)
-RVL_PYTHON_MODULE(gobject, yes)
-RVL_PYTHON_MODULE(pango, yes)
 RVL_PYTHON_MODULE(dbus, yes)
 RVL_PYTHON_MODULE(cracklib, yes)
 
@@ -55,7 +49,6 @@ echo "
 -- revelation compilation options
 
 revelation version:        ${PACKAGE_VERSION}
-With applet:               $with_applet
 ------------------------------------------------------------------
 "
 

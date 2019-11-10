@@ -25,7 +25,11 @@
 
 import config, datahandler, entry, io, ui, util
 
-import gettext, gobject, gtk, urllib
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, GObject
+
+import gettext, urllib
 
 _ = gettext.gettext
 
@@ -34,7 +38,7 @@ EVENT_FILTER		= None
 UNIQUE_DIALOGS		= {}
 
 
-gtk.rc_parse_string("""
+Gtk.rc_parse_string("""
 	style "hig" {
 		GtkDialog::content-area-border	= 0
 		GtkDialog::action-area-border	= 0
@@ -54,13 +58,13 @@ class CancelError(Exception):
 
 ##### BASE DIALOGS #####
 
-class Dialog(gtk.Dialog):
+class Dialog(Gtk.Dialog):
 	"Base class for dialogs"
 
 	def __init__(self, parent, title, buttons = (), default = None):
-		gtk.Dialog.__init__(
+		Gtk.Dialog.__init__(
 			self, title, parent,
-			gtk.DIALOG_DESTROY_WITH_PARENT | gtk.DIALOG_NO_SEPARATOR
+			Gtk.DialogFlags.DESTROY_WITH_PARENT
 		)
 
 		self.set_border_width(12)
@@ -86,7 +90,7 @@ class Dialog(gtk.Dialog):
 
 		# close the dialog on escape
 		if data.keyval == 65307:
-			self.response(gtk.RESPONSE_CLOSE)
+			self.response(Gtk.ResponseType.CLOSE)
 			return True
 
 
@@ -110,29 +114,29 @@ class Dialog(gtk.Dialog):
 
 		self.show_all()
 
-		if EVENT_FILTER != None:
-			self.window.add_filter(EVENT_FILTER)
+		#if EVENT_FILTER != None:
+		#	self.window.add_filter(EVENT_FILTER)
 
 		while 1:
-			response = gtk.Dialog.run(self)
+			response = Gtk.Dialog.run(self)
 
-			if response == gtk.RESPONSE_NONE:
+			if response == Gtk.ResponseType.NONE:
 				continue
 
 			return response
 
 
 
-class Popup(gtk.Window):
+class Popup(Gtk.Window):
 	"Base class for popup (frameless) dialogs"
 
 	def __init__(self, widget = None):
-		gtk.Window.__init__(self)
+		GObject.GObject.__init__(self)
 		self.set_decorated(False)
 
-		self.border = gtk.Frame()
-		self.border.set_shadow_type(gtk.SHADOW_OUT)
-		gtk.Window.add(self, self.border)
+		self.border = Gtk.Frame()
+		self.border.set_shadow_type(Gtk.ShadowType.OUT)
+		Gtk.Window.add(self, self.border)
 
 		if widget != None:
 			self.add(widget)
@@ -164,7 +168,7 @@ class Popup(gtk.Window):
 	def realize(self):
 		"Realizes the popup and displays children"
 
-		gtk.Window.realize(self)
+		Gtk.Window.realize(self)
 
 		for child in self.get_children():
 			child.show_all()
@@ -179,27 +183,27 @@ class Popup(gtk.Window):
 		self.show_all()
 
 
-gobject.signal_new("closed", Popup, gobject.SIGNAL_ACTION, gobject.TYPE_BOOLEAN, ())
+GObject.signal_new("closed", Popup, GObject.SignalFlags.ACTION, GObject.TYPE_BOOLEAN, ())
 
 
 
 class Utility(Dialog):
 	"A utility dialog"
 
-	def __init__(self, parent, title, buttons = ( ( gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE ), ), default = None):
+	def __init__(self, parent, title, buttons = ( ( Gtk.STOCK_CLOSE, Gtk.ResponseType.CLOSE ), ), default = None):
 		Dialog.__init__(self, parent, title, buttons, default)
 
 		self.set_border_width(12)
 		self.vbox.set_spacing(18)
 
-		self.sizegroup	= gtk.SizeGroup(gtk.SIZE_GROUP_HORIZONTAL)
+		self.sizegroup	= Gtk.SizeGroup(Gtk.SizeGroupMode.HORIZONTAL)
 
 
 	def add_section(self, title, description = None):
 		"Adds an input section to the dialog"
 
 		section = ui.InputSection(title, description, self.sizegroup)
-		self.vbox.pack_start(section)
+		self.vbox.pack_start(section, True, True, 0)
 
 		return section
 
@@ -214,24 +218,24 @@ class Message(Dialog):
 		# hbox with image and contents
 		hbox = ui.HBox()
 		hbox.set_spacing(12)
-		self.vbox.pack_start(hbox)
+		self.vbox.pack_start(hbox, True, True, 0)
 		self.vbox.set_spacing(24)
 
 		# set up image
 		if stockimage != None:
-			image = ui.Image(stockimage, gtk.ICON_SIZE_DIALOG)
+			image = ui.Image(stockimage, Gtk.IconSize.DIALOG)
 			image.set_alignment(0.5, 0)
-			hbox.pack_start(image, False, False)
+			hbox.pack_start(image, False, False, 0)
 
 		# set up message
 		self.contents = ui.VBox()
 		self.contents.set_spacing(10)
-		hbox.pack_start(self.contents)
+		hbox.pack_start(self.contents, True, True, 0)
 
 		label = ui.Label("<span size=\"larger\" weight=\"bold\">%s</span>\n\n%s" % ( util.escape_markup(title), text))
 		label.set_alignment(0, 0)
 		label.set_selectable(True)
-		self.contents.pack_start(label)
+		self.contents.pack_start(label, True, True, 0)
 
 
 	def run(self):
@@ -248,31 +252,31 @@ class Message(Dialog):
 class Error(Message):
 	"Displays an error message"
 
-	def __init__(self, parent, title, text, buttons = ( ( gtk.STOCK_OK, gtk.RESPONSE_OK), ), default = None):
-		Message.__init__(self, parent, title, text, gtk.STOCK_DIALOG_ERROR, buttons, default)
+	def __init__(self, parent, title, text, buttons = ( ( Gtk.STOCK_OK, Gtk.ResponseType.OK), ), default = None):
+		Message.__init__(self, parent, title, text, Gtk.STOCK_DIALOG_ERROR, buttons, default)
 
 
 
 class Info(Message):
 	"Displays an info message"
 
-	def __init__(self, parent, title, text, buttons = ( ( gtk.STOCK_OK, gtk.RESPONSE_OK ), ), default = None):
-		Message.__init__(self, parent, title, text, gtk.STOCK_DIALOG_INFO, buttons, default)
+	def __init__(self, parent, title, text, buttons = ( ( Gtk.STOCK_OK, Gtk.ResponseType.OK ), ), default = None):
+		Message.__init__(self, parent, title, text, Gtk.STOCK_DIALOG_INFO, buttons, default)
 
 
 
 class Question(Message):
 	"Displays a question"
 
-	def __init__(self, parent, title, text, buttons = ( ( gtk.STOCK_OK, gtk.RESPONSE_OK ), ), default = None):
-		Message.__init__(self, parent, title, text, gtk.STOCK_DIALOG_QUESTION, buttons, default)
+	def __init__(self, parent, title, text, buttons = ( ( Gtk.STOCK_OK, Gtk.ResponseType.OK ), ), default = None):
+		Message.__init__(self, parent, title, text, Gtk.STOCK_DIALOG_QUESTION, buttons, default)
 
 
 
 class Warning(Message):
 	"Displays a warning message"
 
-	def __init__(self, parent, title, text, buttons = ( ( gtk.STOCK_OK, gtk.RESPONSE_OK ), ), default = None):
+	def __init__(self, parent, title, text, buttons = ( ( Gtk.STOCK_OK, Gtk.ResponseType.OK ), ), default = None):
 		Message.__init__(self, parent, title, text, ui.STOCK_WARNING, buttons, default)
 
 
@@ -285,14 +289,14 @@ class FileChanged(Warning):
 	def __init__(self, parent, filename):
 		Warning.__init__(
 			self, parent, _('File has changed'), _('The current file \'%s\' has changed. Do you want to reload it?') % filename,
-			( ( gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL ), ( ui.STOCK_RELOAD, gtk.RESPONSE_OK ) )
+			( ( Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL ), ( ui.STOCK_RELOAD, Gtk.ResponseType.OK ) )
 		)
 
 
 	def run(self):
 		"Displays the dialog"
 
-		if Warning.run(self) == gtk.RESPONSE_OK:
+		if Warning.run(self) == Gtk.ResponseType.OK:
 			return True
 
 		else:
@@ -305,7 +309,7 @@ class FileChanges(Warning):
 	def __init__(self, parent, title, text):
 		Warning.__init__(
 			self, parent, title, text,
-			( ( ui.STOCK_DISCARD, gtk.RESPONSE_ACCEPT ), ( gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL ), ( gtk.STOCK_SAVE, gtk.RESPONSE_OK ) )
+			( ( ui.STOCK_DISCARD, Gtk.ResponseType.ACCEPT ), ( Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL ), ( Gtk.STOCK_SAVE, Gtk.ResponseType.OK ) )
 		)
 
 
@@ -314,13 +318,13 @@ class FileChanges(Warning):
 
 		response = Warning.run(self)
 
-		if response == gtk.RESPONSE_OK:	
+		if response == Gtk.ResponseType.OK:
 			return True
 
-		elif response == gtk.RESPONSE_ACCEPT:
+		elif response == Gtk.ResponseType.ACCEPT:
 			return False
 
-		elif response in ( gtk.RESPONSE_CANCEL, gtk.RESPONSE_CLOSE ):
+		elif response in ( Gtk.ResponseType.CANCEL, Gtk.ResponseType.CLOSE ):
 			raise CancelError
 
 
@@ -365,15 +369,15 @@ class FileReplace(Warning):
 		Warning.__init__(
 			self, parent, _('Replace existing file?'),
 			_('The file \'%s\' already exists - do you wish to replace this file?') % file,
-			( ( gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL ), ( ui.STOCK_REPLACE, gtk.RESPONSE_OK ) ),
-			gtk.RESPONSE_CANCEL
+			( ( Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL ), ( ui.STOCK_REPLACE, Gtk.ResponseType.OK ) ),
+			Gtk.ResponseType.CANCEL
 		)
 
 
 	def run(self):
 		"Displays the dialog"
 
-		if Warning.run(self) == gtk.RESPONSE_OK:
+		if Warning.run(self) == Gtk.ResponseType.OK:
 			return True
 
 		else:
@@ -388,14 +392,14 @@ class FileSaveInsecure(Warning):
 		Warning.__init__(
 			self, parent, _('Save to insecure file?'),
 			_('You have chosen to save your passwords to an insecure (unencrypted) file format - if anyone has access to this file, they will be able to see your passwords.'),
-			( ( gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL ), ( gtk.STOCK_SAVE, gtk.RESPONSE_OK ) ), 0
+			( ( Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL ), ( Gtk.STOCK_SAVE, Gtk.ResponseType.OK ) ), 0
 		)
 
 
 	def run(self):
 		"Runs the dialog"
 
-		if Warning.run(self) == gtk.RESPONSE_OK:
+		if Warning.run(self) == Gtk.ResponseType.OK:
 			return True
 
 		else:
@@ -405,25 +409,25 @@ class FileSaveInsecure(Warning):
 
 ##### FILE SELECTION DIALOGS #####
 
-class FileSelector(gtk.FileChooserDialog):
+class FileSelector(Gtk.FileChooserDialog):
 	"A normal file selector"
 
-	def __init__(self, parent, title = None, action = gtk.FILE_CHOOSER_ACTION_OPEN, stockbutton = None):
+	def __init__(self, parent, title = None, action = Gtk.FileChooserAction.OPEN, stockbutton = None):
 
 		if stockbutton is None:
-			if action == gtk.FILE_CHOOSER_ACTION_OPEN:
-				stockbutton = gtk.STOCK_OPEN
+			if action == Gtk.FileChooserAction.OPEN:
+				stockbutton = Gtk.STOCK_OPEN
 
-			elif action == gtk.FILE_CHOOSER_ACTION_SAVE:
-				stockbutton = gtk.STOCK_SAVE
+			elif action == Gtk.FileChooserAction.SAVE:
+				stockbutton = Gtk.STOCK_SAVE
 
-		gtk.FileChooserDialog.__init__(
+		Gtk.FileChooserDialog.__init__(
 			self, title, parent, action,
-			( gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, stockbutton, gtk.RESPONSE_OK )
+			( Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, stockbutton, Gtk.ResponseType.OK )
 		)
 
 		self.set_local_only(False)
-		self.set_default_response(gtk.RESPONSE_OK)
+		self.set_default_response(Gtk.ResponseType.OK)
 
 		self.inputsection = None
 
@@ -455,14 +459,14 @@ class FileSelector(gtk.FileChooserDialog):
 
 		self.show_all()
 
-		if EVENT_FILTER != None:
-			self.window.add_filter(EVENT_FILTER)
+		#if EVENT_FILTER != None:
+		#	self.window.add_filter(EVENT_FILTER)
 
-		response = gtk.FileChooserDialog.run(self)
+		response = Gtk.FileChooserDialog.run(self)
 		filename = self.get_filename()
 		self.destroy()
 
-		if response == gtk.RESPONSE_OK:
+		if response == Gtk.ResponseType.OK:
 			return filename
 
 		else:
@@ -476,7 +480,7 @@ class ExportFileSelector(FileSelector):
 	def __init__(self, parent):
 		FileSelector.__init__(
 			self, parent, _('Select File to Export to'),
-			gtk.FILE_CHOOSER_ACTION_SAVE, ui.STOCK_EXPORT
+			Gtk.FileChooserAction.SAVE, ui.STOCK_EXPORT
 		)
 
 		# set up filetype dropdown
@@ -497,7 +501,7 @@ class ExportFileSelector(FileSelector):
 		self.show_all()
 		self.inputsection.show_all()
 
-		if gtk.FileSelection.run(self) == gtk.RESPONSE_OK:
+		if Gtk.FileSelection.run(self) == Gtk.ResponseType.OK:
 			filename = self.get_filename()
 			handler = self.dropdown.get_active_item()[2]
 			self.destroy()
@@ -516,7 +520,7 @@ class ImportFileSelector(FileSelector):
 	def __init__(self, parent):
 		FileSelector.__init__(
 			self, parent, _('Select File to Import'),
-			gtk.FILE_CHOOSER_ACTION_OPEN, ui.STOCK_IMPORT
+			Gtk.FileChooserAction.OPEN, ui.STOCK_IMPORT
 		)
 
 		# set up filetype dropdown
@@ -535,7 +539,7 @@ class ImportFileSelector(FileSelector):
 		self.show_all()
 		self.inputsection.show_all()
 
-		if gtk.FileSelection.run(self) == gtk.RESPONSE_OK:
+		if Gtk.FileSelection.run(self) == Gtk.ResponseType.OK:
 			filename = self.get_filename()
 			handler = self.dropdown.get_active_item()[2]
 			self.destroy()
@@ -554,15 +558,15 @@ class OpenFileSelector(FileSelector):
 	def __init__(self, parent):
 		FileSelector.__init__(
 			self, parent, _('Select File to Open'),
-			gtk.FILE_CHOOSER_ACTION_OPEN, gtk.STOCK_OPEN
+			Gtk.FileChooserAction.OPEN, Gtk.STOCK_OPEN
 		)
 
-		filter = gtk.FileFilter()
+		filter = Gtk.FileFilter()
 		filter.set_name(_('Revelation files'))
 		filter.add_mime_type("application/x-revelation")
 		self.add_filter(filter)
 
-		filter = gtk.FileFilter()
+		filter = Gtk.FileFilter()
 		filter.set_name(_('All files'))
 		filter.add_pattern("*")
 		self.add_filter(filter)
@@ -575,15 +579,15 @@ class SaveFileSelector(FileSelector):
 	def __init__(self, parent):
 		FileSelector.__init__(
 			self, parent, _('Select File to Save to'),
-			gtk.FILE_CHOOSER_ACTION_SAVE, gtk.STOCK_SAVE
+			Gtk.FileChooserAction.SAVE, Gtk.STOCK_SAVE
 		)
 
-		filter = gtk.FileFilter()
+		filter = Gtk.FileFilter()
 		filter.set_name(_('Revelation files'))
 		filter.add_mime_type("application/x-revelation")
 		self.add_filter(filter)
 
-		filter = gtk.FileFilter()
+		filter = Gtk.FileFilter()
 		filter.set_name(_('All files'))
 		filter.add_pattern("*")
 		self.add_filter(filter)
@@ -599,10 +603,10 @@ class SaveFileSelector(FileSelector):
 			FileReplace(self, io.file_normpath(self.get_uri())).run()
 
 		except CancelError:
-			return gtk.FILE_CHOOSER_CONFIRMATION_SELECT_AGAIN
+			return Gtk.FILE_CHOOSER_CONFIRMATION_SELECT_AGAIN
 
 		else:
-			return gtk.FILE_CHOOSER_CONFIRMATION_ACCEPT_FILENAME
+			return Gtk.FILE_CHOOSER_CONFIRMATION_ACCEPT_FILENAME
 
 
 
@@ -611,16 +615,16 @@ class SaveFileSelector(FileSelector):
 class Password(Message):
 	"A base dialog for asking for passwords"
 
-	def __init__(self, parent, title, text, stock = gtk.STOCK_OK):
+	def __init__(self, parent, title, text, stock = Gtk.STOCK_OK):
 		Message.__init__(
-			self, parent, title, text, gtk.STOCK_DIALOG_AUTHENTICATION,
-			( ( gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL ), ( stock, gtk.RESPONSE_OK ))
+			self, parent, title, text, Gtk.STOCK_DIALOG_AUTHENTICATION,
+			( ( Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL ), ( stock, Gtk.ResponseType.OK ))
 		)
 
 		self.entries = []
 
 		self.sect_passwords = ui.InputSection()
-		self.contents.pack_start(self.sect_passwords)
+		self.contents.pack_start(self.sect_passwords, True, True, 0)
 
 
 	def add_entry(self, name, entry = None):
@@ -644,7 +648,7 @@ class Password(Message):
 		if len(self.entries) > 0:
 			self.entries[0].grab_focus()
 
-		return gtk.Dialog.run(self)
+		return Gtk.Dialog.run(self)
 
 
 
@@ -672,7 +676,7 @@ class PasswordChange(Password):
 		"Displays the dialog"
 
 		while 1:
-			if Password.run(self) != gtk.RESPONSE_OK:
+			if Password.run(self) != Gtk.ResponseType.OK:
 				self.destroy()
 				raise CancelError
 
@@ -692,10 +696,10 @@ class PasswordChange(Password):
 					response = Warning(
 						self, _('Use insecure password?'),
 						_('The password you entered is not secure; %s. Are you sure you want to use it?') % str(res).lower(),
-						( ( gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL ), ( gtk.STOCK_OK, gtk.RESPONSE_OK ) ), gtk.RESPONSE_CANCEL
+						( ( Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL ), ( Gtk.STOCK_OK, Gtk.ResponseType.OK ) ), Gtk.ResponseType.CANCEL
 					).run()
 
-					if response != gtk.RESPONSE_OK:
+					if response != Gtk.ResponseType.OK:
 						continue
 
 				self.destroy()
@@ -713,7 +717,7 @@ class PasswordLock(Password):
 			ui.STOCK_UNLOCK
 		)
 
-		self.get_button(1).set_label(gtk.STOCK_QUIT)
+		self.get_button(1).set_label(Gtk.STOCK_QUIT)
 
 		self.password = password
 		self.entry_password = self.add_entry(_('Password'))
@@ -726,10 +730,10 @@ class PasswordLock(Password):
 			try:
 				response = Password.run(self)
 
-				if response == gtk.RESPONSE_CANCEL:
+				if response == Gtk.ResponseType.CANCEL:
 					raise CancelError
 
-				elif response != gtk.RESPONSE_OK:
+				elif response != Gtk.ResponseType.OK:
 					continue
 
 				elif self.entry_password.get_text() == self.password:
@@ -757,7 +761,7 @@ class PasswordOpen(Password):
 		Password.__init__(
 			self, parent, _('Enter file password'),
 			_('The file \'%s\' is encrypted. Please enter the file password to open it.') % filename,
-			gtk.STOCK_OPEN
+			Gtk.STOCK_OPEN
 		)
 
 		self.entry_password = self.add_entry(_('Password'))
@@ -770,7 +774,7 @@ class PasswordOpen(Password):
 		password = self.entry_password.get_text()
 		self.destroy()
 
-		if response == gtk.RESPONSE_OK:
+		if response == Gtk.ResponseType.OK:
 			return password
 
 		else:
@@ -785,7 +789,7 @@ class PasswordSave(Password):
 		Password.__init__(
 			self, parent, _('Enter password for file'),
 			_('Please enter a password for the file \'%s\'. You will need this password to open the file at a later time.') % filename,
-			gtk.STOCK_SAVE
+			Gtk.STOCK_SAVE
 		)
 
 		self.entry_new		= self.add_entry(_('New password'), ui.PasswordEntry())
@@ -797,7 +801,7 @@ class PasswordSave(Password):
 		"Displays the dialog"
 
 		while 1:
-			if Password.run(self) != gtk.RESPONSE_OK:
+			if Password.run(self) != Gtk.ResponseType.OK:
 				self.destroy()
 				raise CancelError
 
@@ -819,10 +823,10 @@ class PasswordSave(Password):
 					response = Warning(
 						self, _('Use insecure password?'),
 						_('The password you entered is not secure; %s. Are you sure you want to use it?') % res,
-						( ( gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL ), ( gtk.STOCK_OK, gtk.RESPONSE_OK ) ), gtk.RESPONSE_CANCEL
+						( ( Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL ), ( Gtk.STOCK_OK, Gtk.ResponseType.OK ) ), Gtk.ResponseType.CANCEL
 					).run()
 
-					if response != gtk.RESPONSE_OK:
+					if response != Gtk.ResponseType.OK:
 						continue
 
 				self.destroy()
@@ -839,8 +843,8 @@ class EntryEdit(Utility):
 		Utility.__init__(
 			self, parent, title,
 			(
-				( gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL ),
-				( e is None and ui.STOCK_NEW_ENTRY or ui.STOCK_UPDATE, gtk.RESPONSE_OK )
+				( Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL ),
+				( e is None and ui.STOCK_NEW_ENTRY or ui.STOCK_UPDATE, Gtk.ResponseType.OK )
 			)
 		)
 
@@ -906,8 +910,9 @@ class EntryEdit(Utility):
 			if self.fielddata.has_key(type(field)):
 				fieldentry.set_text(self.fielddata[type(field)])
 
-			if (fieldentry.flags() & gtk.NO_WINDOW) != gtk.NO_WINDOW:
-				fieldentry.set_tooltip_text(field.description)
+			# FIXME: port
+			# if (fieldentry.flags() & Gtk.NO_WINDOW) != Gtk.NO_WINDOW:
+			#	fieldentry.set_tooltip_text(field.description)
 
 			elif hasattr(fieldentry, "entry") == True:
 				fieldentry.entry.set_tooltip_text(field.description)
@@ -940,7 +945,7 @@ class EntryEdit(Utility):
 		while 1:
 			self.show_all()
 
-			if Utility.run(self) == gtk.RESPONSE_OK:
+			if Utility.run(self) == Gtk.ResponseType.OK:
 				e = self.get_entry()
 
 				if e.name == "":
@@ -999,7 +1004,7 @@ class EntryRemove(Warning):
 
 		Warning.__init__(
 			self, parent, title, text,
-			( ( gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL ), ( ui.STOCK_REMOVE, gtk.RESPONSE_OK ) ),
+			( ( Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL ), ( ui.STOCK_REMOVE, Gtk.ResponseType.OK ) ),
 			0
 		)
 
@@ -1007,7 +1012,7 @@ class EntryRemove(Warning):
 	def run(self):
 		"Displays the dialog"
 
-		if Warning.run(self) == gtk.RESPONSE_OK:
+		if Warning.run(self) == Gtk.ResponseType.OK:
 			return True
 
 		else:
@@ -1022,8 +1027,8 @@ class FolderEdit(Utility):
 		Utility.__init__(
 			self, parent, title,
 			(
-				( gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL ),
-				( e == None and ui.STOCK_NEW_FOLDER or ui.STOCK_UPDATE, gtk.RESPONSE_OK )
+				( Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL ),
+				( e == None and ui.STOCK_NEW_FOLDER or ui.STOCK_UPDATE, Gtk.ResponseType.OK )
 			)
 		)
 
@@ -1059,7 +1064,7 @@ class FolderEdit(Utility):
 		while 1:
 			self.show_all()
 
-			if Utility.run(self) == gtk.RESPONSE_OK:
+			if Utility.run(self) == Gtk.ResponseType.OK:
 				e = self.get_entry()
 
 				if e.name == "":
@@ -1087,13 +1092,13 @@ class FolderEdit(Utility):
 
 ##### MISCELLANEOUS DIALOGS #####
 
-class About(gtk.AboutDialog):
+class About(Gtk.AboutDialog):
 	"About dialog"
 
 	def __init__(self, parent):
-		gtk.AboutDialog.__init__(self)
+		Gtk.AboutDialog.__init__(self)
 
-		if isinstance(parent, gtk.Window):
+		if isinstance(parent, Gtk.Window):
 			self.set_transient_for(parent)
 
 		self.set_name(config.APPNAME)
@@ -1102,6 +1107,7 @@ class About(gtk.AboutDialog):
 		self.set_comments(('"%s"\n\n' + _('A password manager for the GNOME desktop')) % config.RELNAME)
 		self.set_license(config.LICENSE)
 		self.set_website(config.URL)
+		self.set_website_label(_('Learn more about Revelation'))
 		self.set_authors(config.AUTHORS)
 		self.set_artists(config.ARTISTS)
 
@@ -1110,7 +1116,7 @@ class About(gtk.AboutDialog):
 		"Displays the dialog"
 
 		self.show_all()
-		gtk.AboutDialog.run(self)
+		Gtk.AboutDialog.run(self)
 
 		self.destroy()
 
@@ -1123,20 +1129,20 @@ class Exception(Error):
 		Error.__init__(
 			self, parent, _('Unknown error'),
 			_('An unknown error occured. Please report the text below to the Revelation developers, along with what you were doing that may have caused the error. You may attempt to continue running Revelation, but it may behave unexpectedly.'),
-			( ( gtk.STOCK_QUIT, gtk.RESPONSE_CANCEL ), ( ui.STOCK_CONTINUE, gtk.RESPONSE_OK ) )
+			( ( Gtk.STOCK_QUIT, Gtk.ResponseType.CANCEL ), ( ui.STOCK_CONTINUE, Gtk.ResponseType.OK ) )
 		)
 
 		textview = ui.TextView(None, traceback)
 		scrolledwindow = ui.ScrolledWindow(textview)
 		scrolledwindow.set_size_request(-1, 120)
 
-		self.contents.pack_start(scrolledwindow)
+		self.contents.pack_start(scrolledwindow, True, True, 0)
 
 
 	def run(self):
 		"Runs the dialog"
 
-		return Error.run(self) == gtk.RESPONSE_OK
+		return Error.run(self) == Gtk.ResponseType.OK
 
 
 
@@ -1146,7 +1152,7 @@ class PasswordChecker(Utility):
 	def __init__(self, parent, cfg = None, clipboard = None):
 		Utility.__init__(
 			self, parent, _('Password Checker'),
-			( ( gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE ), )
+			( ( Gtk.STOCK_CLOSE, Gtk.ResponseType.CLOSE ), )
 		)
 
 		self.cfg = cfg
@@ -1203,8 +1209,8 @@ class PasswordChecker(Utility):
 
 		self.show_all()
 
-		if EVENT_FILTER != None:
-			self.window.add_filter(EVENT_FILTER)
+		#if EVENT_FILTER != None:
+		#	self.window.add_filter(EVENT_FILTER)
 
 		# for some reason, gtk crashes on close-by-escape
 		# if we don't do this
@@ -1219,7 +1225,7 @@ class PasswordGenerator(Utility):
 	def __init__(self, parent, cfg, clipboard = None):
 		Utility.__init__(
 			self, parent, _('Password Generator'),
-			( ( gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE ), ( ui.STOCK_GENERATE, gtk.RESPONSE_OK ) )
+			( ( Gtk.STOCK_CLOSE, Gtk.ResponseType.CLOSE ), ( ui.STOCK_GENERATE, Gtk.ResponseType.OK ) )
 		)
 
 		self.config = cfg
@@ -1252,7 +1258,7 @@ class PasswordGenerator(Utility):
 	def __cb_response(self, widget, response):
 		"Callback for dialog responses"
 
-		if response == gtk.RESPONSE_OK:
+		if response == Gtk.ResponseType.OK:
 			self.entry.set_text(util.generate_password(self.spin_pwlen.get_value(), self.check_punctuation_chars.get_active()))
 
 		else:
@@ -1265,8 +1271,8 @@ class PasswordGenerator(Utility):
 		self.show_all()
 		self.get_button(0).grab_focus()
 
-		if EVENT_FILTER != None:
-			self.window.add_filter(EVENT_FILTER)
+		#if EVENT_FILTER != None:
+		#	self.window.add_filter(EVENT_FILTER)
 
 
 

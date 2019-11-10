@@ -25,7 +25,11 @@
 
 import datahandler, entry
 
-import gobject, gtk, gtk.gdk, time
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, GObject, Gdk, Pango
+
+import time
 
 
 
@@ -38,14 +42,14 @@ SEARCH_PREVIOUS	= "prev"
 
 
 
-class Clipboard(gobject.GObject):
+class Clipboard(GObject.Object):
 	"A normal text-clipboard"
 
 	def __init__(self):
-		gobject.GObject.__init__(self)
+		GObject.Object.__init__(self)
 
-		self.clip_clipboard	= gtk.clipboard_get("CLIPBOARD")
-		self.clip_primary	= gtk.clipboard_get("PRIMARY")
+		self.clip_clipboard	= Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+		self.clip_primary	= Gtk.Clipboard.get(Gdk.SELECTION_PRIMARY)
 
 		self.cleartimer		= Timer(10)
 		self.cleartimeout	= 60
@@ -140,16 +144,20 @@ class Clipboard(gobject.GObject):
 
 
 
-class EntryClipboard(gobject.GObject):
+class EntryClipboard(GObject.GObject):
 	"A clipboard for entries"
 
 	def __init__(self):
-		gobject.GObject.__init__(self)
+		GObject.Object.__init__(self)
 
-		self.clipboard = gtk.Clipboard(gtk.gdk.display_get_default(), "_REVELATION_ENTRY")
+		clipboard_atom = Gdk.Atom.intern("_REVELATION_ENTRY", False)
+
+		# self.clipboard = Gtk.Clipboard(Gdk.Display.get_default(), "_REVELATION_ENTRY")
+		# FIXME: port revisit
+		self.clipboard = Gtk.Clipboard.get(clipboard_atom)
 		self.__has_contents = False
 
-		gobject.timeout_add(500, lambda: self.__check_contents())
+		GObject.timeout_add(500, lambda: self.__check_contents())
 
 
 	def __check_contents(self):
@@ -209,15 +217,15 @@ class EntryClipboard(gobject.GObject):
 		self.__check_contents()
 
 
-gobject.signal_new("content-toggled", EntryClipboard, gobject.SIGNAL_ACTION, gobject.TYPE_BOOLEAN, ( gobject.TYPE_BOOLEAN, ))
+GObject.signal_new("content-toggled", EntryClipboard, GObject.SignalFlags.ACTION, GObject.TYPE_BOOLEAN, ( GObject.TYPE_BOOLEAN, ))
 
 
 
-class EntrySearch(gobject.GObject):
+class EntrySearch(GObject.GObject):
 	"Handles searching in an EntryStore"
 
 	def __init__(self, entrystore):
-		gobject.GObject.__init__(self)
+		GObject.GObject.__init__(self)
 		self.entrystore	= entrystore
 
 		self.folders		= True
@@ -298,22 +306,22 @@ class EntrySearch(gobject.GObject):
 
 
 
-class EntryStore(gtk.TreeStore):
+class EntryStore(Gtk.TreeStore):
 	"A data structure for storing entries"
 
 	def __init__(self):
-		gtk.TreeStore.__init__(
+		Gtk.TreeStore.__init__(
 			self,
-			gobject.TYPE_STRING,	# name
-			gobject.TYPE_STRING,	# icon
-			gobject.TYPE_PYOBJECT	# entry
+			GObject.TYPE_STRING,	# name
+			GObject.TYPE_STRING,	# icon
+			GObject.TYPE_PYOBJECT	# entry
 		)
 
 		self.changed = False
 		self.connect("row-has-child-toggled", self.__cb_iter_has_child)
 
                 self.set_sort_func(COLUMN_NAME, self.__cmp)
-                self.set_sort_column_id(COLUMN_NAME, gtk.SORT_ASCENDING)
+                self.set_sort_column_id(COLUMN_NAME, Gtk.SortType.ASCENDING)
 
 
         def __cmp(self, treemodel, iter1, iter2, user_data=None):
@@ -354,7 +362,7 @@ class EntryStore(gtk.TreeStore):
 	def clear(self):
 		"Removes all entries"
 
-		gtk.TreeStore.clear(self)
+		Gtk.TreeStore.clear(self)
 		self.changed = False
 
 
@@ -420,13 +428,16 @@ class EntryStore(gtk.TreeStore):
 		"Gets an iter from a path"
 
 		try:
-			if path in ( None, "", (), [] ):
+			# FIXME: port. Commented to make it work
+			# if path in ( None, "", (), [] ):
+			#	return None
+			if path is None:
 				return None
 
 			if type(path) == list:
 				path = tuple(path)
 
-			return gtk.TreeStore.get_iter(self, path)
+			return Gtk.TreeStore.get_iter(self, path)
 
 		except ValueError:
 			return None
@@ -435,7 +446,7 @@ class EntryStore(gtk.TreeStore):
 	def get_path(self, iter):
 		"Gets a path from an iter"
 
-		return iter is not None and gtk.TreeStore.get_path(self, iter) or None
+		return iter is not None and Gtk.TreeStore.get_path(self, iter) or None
 
 
 	def get_popular_values(self, fieldtype, threshold = 3):
@@ -563,16 +574,16 @@ class EntryStore(gtk.TreeStore):
 
 
 
-class Timer(gobject.GObject):
+class Timer(GObject.GObject):
 	"Handles timeouts etc"
 
 	def __init__(self, resolution = 1):
-		gobject.GObject.__init__(self)
+		GObject.GObject.__init__(self)
 
 		self.offset		= None
 		self.timeout		= None
 
-		gobject.timeout_add(resolution * 1000, self.__cb_check)
+		GObject.timeout_add(resolution * 1000, self.__cb_check)
 
 
 	def __cb_check(self):
@@ -610,15 +621,15 @@ class Timer(gobject.GObject):
 		self.timeout = None
 
 
-gobject.signal_new("ring", Timer, gobject.SIGNAL_ACTION, gobject.TYPE_BOOLEAN, ())
+GObject.signal_new("ring", Timer, GObject.SignalFlags.ACTION, GObject.TYPE_BOOLEAN, ())
 
 
 
-class UndoQueue(gobject.GObject):
+class UndoQueue(GObject.GObject):
 	"Handles undo/redo tracking"
 
 	def __init__(self):
-		gobject.GObject.__init__(self)
+		GObject.GObject.__init__(self)
 
 		self.queue	= []
 		self.pointer	= 0
@@ -704,6 +715,6 @@ class UndoQueue(gobject.GObject):
 		self.emit("changed")
 
 
-gobject.type_register(UndoQueue)
-gobject.signal_new("changed", UndoQueue, gobject.SIGNAL_ACTION, gobject.TYPE_BOOLEAN, ())
+GObject.type_register(UndoQueue)
+GObject.signal_new("changed", UndoQueue, GObject.SignalFlags.ACTION, GObject.TYPE_BOOLEAN, ())
 

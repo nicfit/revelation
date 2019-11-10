@@ -22,7 +22,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-import gettext, gobject, gtk, gtk.gdk, os, pwd, sys, dbus, urllib
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, GObject, Gdk
+
+import gettext, os, pwd, sys, dbus, urllib
 from dbus.mainloop.glib import DBusGMainLoop
 
 from revelation import config, data, datahandler, dialog, entry, io, ui, util
@@ -305,7 +309,8 @@ class Revelation(ui.App):
 
 		self.show_all()
 
-		self.window.add_filter(self.__cb_event_filter)
+		# FIXME: port
+		# self.window.add_filter(self.__cb_event_filter)
 
 
 		# set some variables
@@ -333,15 +338,15 @@ class Revelation(ui.App):
 	def __init_ui(self):
 		"Sets up the UI"
 
-		gtk.about_dialog_set_url_hook(lambda d,l: gtk.show_uri(None, l, gtk.get_current_event_time()))
-		gtk.about_dialog_set_email_hook(lambda d,l: gtk.show_uri(None, "mailto:" + l, gtk.get_current_event_time()))
-
 		# set window icons
 		pixbufs = [ self.items.get_pixbuf("revelation", size) for size in ( 48, 32, 24, 16) ]
 		pixbufs = [ pixbuf for pixbuf in pixbufs if pixbuf != None ]
 
 		if len(pixbufs) > 0:
-			gtk.window_set_default_icon_list(*pixbufs)
+			# FIXME: port
+			# Gtk.window_set_default_icon_list(*pixbufs)
+			Gtk.Window.set_default_icon_list(pixbufs)
+			pass
 
 		# load UI definitions
 		self.uimanager.add_ui_from_file(config.DIR_UI + "/menubar.xml")
@@ -375,11 +380,12 @@ class Revelation(ui.App):
 		self.set_contents(self.hpaned)
 
 		# set up drag-and-drop
-		self.drag_dest_set(gtk.DEST_DEFAULT_ALL, ( ( "text/uri-list", 0, 0 ), ), gtk.gdk.ACTION_COPY | gtk.gdk.ACTION_MOVE | gtk.gdk.ACTION_LINK )
+		# FIXME: port
+		# self.drag_dest_set(Gtk.DestDefaults.ALL, ( ( "text/uri-list", 0, 0 ), ), Gdk.DragAction.COPY | Gdk.DragAction.MOVE | Gdk.DragAction.LINK )
 		self.connect("drag_data_received", self.__cb_drag_dest)
 
-		self.tree.enable_model_drag_source(gtk.gdk.BUTTON1_MASK, ( ( "revelation/treerow", gtk.TARGET_SAME_APP | gtk.TARGET_SAME_WIDGET, 0), ), gtk.gdk.ACTION_MOVE)
-		self.tree.enable_model_drag_dest(( ( "revelation/treerow", gtk.TARGET_SAME_APP | gtk.TARGET_SAME_WIDGET, 0), ), gtk.gdk.ACTION_MOVE)
+		self.tree.enable_model_drag_source(Gdk.ModifierType.BUTTON1_MASK, ( ( "revelation/treerow", Gtk.TargetFlags.SAME_APP | Gtk.TargetFlags.SAME_WIDGET, 0), ), Gdk.DragAction.MOVE)
+		self.tree.enable_model_drag_dest(( ( "revelation/treerow", Gtk.TargetFlags.SAME_APP | Gtk.TargetFlags.SAME_WIDGET, 0), ), Gdk.DragAction.MOVE)
 		self.tree.connect("drag_data_received", self.__cb_tree_drag_received)
 
 		# set up callbacks
@@ -520,7 +526,7 @@ class Revelation(ui.App):
 		if focuswidget is self.tree:
 			self.clip_copy(self.tree.get_selected())
 
-		elif isinstance(focuswidget, gtk.Label) or isinstance(focuswidget, gtk.Entry):
+		elif isinstance(focuswidget, Gtk.Label) or isinstance(focuswidget, Gtk.Entry):
 			focuswidget.emit("copy-clipboard")
 
 
@@ -532,7 +538,7 @@ class Revelation(ui.App):
 		if focuswidget is self.tree:
 			self.clip_cut(self.tree.get_selected())
 
-		elif isinstance(focuswidget, gtk.Entry):
+		elif isinstance(focuswidget, Gtk.Entry):
 			focuswidget.emit("cut-clipboard")
 
 
@@ -544,7 +550,7 @@ class Revelation(ui.App):
 		if focuswidget is self.tree:
 			self.clip_paste(self.entryclipboard.get(), self.tree.get_active())
 
-		elif isinstance(focuswidget, gtk.Entry):
+		elif isinstance(focuswidget, Gtk.Entry):
 			focuswidget.emit("paste-clipboard")
 
 
@@ -564,7 +570,7 @@ class Revelation(ui.App):
 		"Event filter for gdk window"
 
 		self.locktimer.reset()
-		return gtk.gdk.FILTER_CONTINUE
+		return Gdk.FILTER_CONTINUE
 
 
 	def __cb_exception(self, type, value, trace):
@@ -577,7 +583,7 @@ class Revelation(ui.App):
 		sys.stderr.write(traceback)
 
 		if dialog.Exception(self, traceback).run() == True:
-			gtk.main()
+			Gtk.main()
 
 		else:
 			sys.exit(1)
@@ -652,7 +658,7 @@ class Revelation(ui.App):
 
 		if destrow is None:
 			destpath = ( self.entrystore.iter_n_children(None) - 1, )
-			pos = gtk.TREE_VIEW_DROP_AFTER
+			pos = Gtk.TreeViewDropPosition.AFTER
 
 		else:
 			destpath, pos = destrow
@@ -668,25 +674,25 @@ class Revelation(ui.App):
 				context.finish(False, False, long(time))
 				return
 
-			elif pos == gtk.TREE_VIEW_DROP_BEFORE and sourcepath[:-1] == destpath[:-1] and sourcepath[-1] == destpath[-1] - 1:
+			elif pos == Gtk.TreeViewDropPosition.BEFORE and sourcepath[:-1] == destpath[:-1] and sourcepath[-1] == destpath[-1] - 1:
 				context.finish(False, False, long(time))
 				return
 
-			elif pos == gtk.TREE_VIEW_DROP_AFTER and sourcepath[:-1] == destpath[:-1] and sourcepath[-1] == destpath[-1] + 1:
+			elif pos == Gtk.TreeViewDropPosition.AFTER and sourcepath[:-1] == destpath[:-1] and sourcepath[-1] == destpath[-1] + 1:
 				context.finish(False, False, long(time))
 				return
 
 
 		# move the entries
-		if pos in ( gtk.TREE_VIEW_DROP_INTO_OR_BEFORE, gtk.TREE_VIEW_DROP_INTO_OR_AFTER):
+		if pos in ( Gtk.TreeViewDropPosition.INTO_OR_BEFORE, Gtk.TreeViewDropPosition.INTO_OR_AFTER):
 			parent = destiter
 			sibling = None
 
-		elif pos == gtk.TREE_VIEW_DROP_BEFORE:
+		elif pos == Gtk.TreeViewDropPosition.BEFORE:
 			parent = self.entrystore.iter_parent(destiter)
 			sibling = destiter
 
-		elif pos == gtk.TREE_VIEW_DROP_AFTER:
+		elif pos == Gtk.TreeViewDropPosition.AFTER:
 			parent = self.entrystore.iter_parent(destiter)
 
 			sibpath = list(destpath)
@@ -731,16 +737,16 @@ class Revelation(ui.App):
 		"Config callback for setting toolbar style"
 
 		if value == "both":
-			self.toolbar.set_style(gtk.TOOLBAR_BOTH)
+			self.toolbar.set_style(Gtk.ToolbarStyle.BOTH)
 
 		elif value == "both-horiz":
-			self.toolbar.set_style(gtk.TOOLBAR_BOTH_HORIZ)
+			self.toolbar.set_style(Gtk.ToolbarStyle.BOTH_HORIZ)
 
 		elif value == "icons":
-			self.toolbar.set_style(gtk.TOOLBAR_ICONS)
+			self.toolbar.set_style(Gtk.ToolbarStyle.ICONS)
 
 		elif value == "text":
-			self.toolbar.set_style(gtk.TOOLBAR_TEXT)
+			self.toolbar.set_style(Gtk.ToolbarStyle.TEXT)
 
 		else:
 			self.toolbar.unset_style()
@@ -1404,7 +1410,7 @@ class Revelation(ui.App):
 
 
 		# TODO can this be done more elegantly?
-		transients = [ window for window in gtk.window_list_toplevels() if window.get_transient_for() == self ]
+		transients = [ window for window in Gtk.Window.list_toplevels() if window.get_transient_for() == self ]
 
 		# store current state
 		activeiter = self.tree.get_active()
@@ -1427,7 +1433,7 @@ class Revelation(ui.App):
 
 			if self.entrystore.changed == True:
 				l = ui.ImageLabel(_('Quit disabled due to unsaved changes'), ui.STOCK_WARNING)
-				d.contents.pack_start(l)
+				d.contents.pack_start(l, True, True, 0)
 				d.get_button(1).set_sensitive(False)
 
 			d.run()
@@ -1552,7 +1558,7 @@ class Revelation(ui.App):
 
 			self.__save_state()
 
-			gtk.main_quit()
+			Gtk.main_quit()
 			sys.exit(0)
 			return True
 
@@ -1590,7 +1596,7 @@ class Revelation(ui.App):
 		if file != "":
 			self.file_open(io.file_normpath(urllib.unquote(file)))
 
-		gtk.main()
+		Gtk.main()
 
 
 	def undo(self):
@@ -1616,7 +1622,7 @@ class Preferences(dialog.Utility):
 		self.set_modal(False)
 
 		self.notebook = ui.Notebook()
-		self.vbox.pack_start(self.notebook)
+		self.vbox.pack_start(self.notebook, True, True, 0)
 
 		self.page_general = self.notebook.create_page(_('General'))
 		self.__init_section_files(self.page_general)
@@ -1679,8 +1685,8 @@ class Preferences(dialog.Utility):
 		eventbox.set_tooltip_text(_('File to open when Revelation is started'))
 
 		hbox = ui.HBox()
-		hbox.pack_start(self.check_autoload, False, False)
-		hbox.pack_start(eventbox)
+		hbox.pack_start(self.check_autoload, False, False, 0)
+		hbox.pack_start(eventbox, True, True, 0)
 		self.section_files.append_widget(None, hbox)
 
 		# check-button for autosave
@@ -1704,9 +1710,9 @@ class Preferences(dialog.Utility):
 
 		hbox = ui.HBox()
 		hbox.set_spacing(3)
-		hbox.pack_start(self.check_autolock, False, False)
-		hbox.pack_start(self.spin_autolock_timeout, False, False)
-		hbox.pack_start(ui.Label(_('minutes')))
+		hbox.pack_start(self.check_autolock, False, False, 0)
+		hbox.pack_start(self.spin_autolock_timeout, False, False, 0)
+		hbox.pack_start(ui.Label(_('minutes'), True), False, False, 0)
 		self.section_files.append_widget(None, hbox)
 
 
@@ -1819,8 +1825,9 @@ class Preferences(dialog.Utility):
 
 		self.show_all()
 
-		if dialog.EVENT_FILTER != None:
-			self.window.add_filter(dialog.EVENT_FILTER)
+		# FIXME: port
+		# if dialog.EVENT_FILTER != None:
+		#	self.window.add_filter(dialog.EVENT_FILTER)
 
 		# for some reason, gtk crashes on close-by-escape unless we do this
 		self.get_button(0).grab_focus()
