@@ -26,7 +26,7 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GObject, Gdk
 
-import gettext, os, pwd, sys, dbus, urllib
+import gettext, os, pwd, sys, dbus, urllib.request, urllib.parse, urllib.error
 from dbus.mainloop.glib import DBusGMainLoop
 
 from revelation import config, data, datahandler, dialog, entry, io, ui, util
@@ -1594,7 +1594,7 @@ class Revelation(ui.App):
 
 
 		if file != "":
-			self.file_open(io.file_normpath(urllib.unquote(file)))
+			self.file_open(io.file_normpath(urllib.parse.unquote(file)))
 
 		Gtk.main()
 

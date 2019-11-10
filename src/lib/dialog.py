@@ -30,7 +30,7 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GObject
 
-import gettext, urllib
+import gettext, urllib.parse
 
 _ = gettext.gettext
 
@@ -452,7 +452,7 @@ class FileSelector(Gtk.FileChooserDialog):
 			return None
 
 		else:
-			return io.file_normpath(urllib.unquote(uri))
+			return io.file_normpath(urllib.parse.unquote(uri))
 
 
 	def run(self):
