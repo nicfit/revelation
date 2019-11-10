@@ -38,7 +38,7 @@ class Revelation(ui.App):
 
 	def __init__(self):
 		sys.excepthook = self.__cb_exception
-		os.umask(0077)
+		os.umask(0o077)
 
 		gettext.bindtextdomain(config.PACKAGE, config.DIR_LOCALE)
 		gettext.bind_textdomain_codeset(config.PACKAGE, "UTF-8")
